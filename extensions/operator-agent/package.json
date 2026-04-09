@@ -1,0 +1,88 @@
+{
+  "name": "operator-agent",
+  "publisher": "vscode",
+  "displayName": "Operator Agent",
+  "description": "Bounded operator controller for workspace actions.",
+  "version": "0.0.1",
+  "license": "MIT",
+  "enabledApiProposals": [
+    "chatPromptFiles"
+  ],
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "capabilities": {
+    "virtualWorkspaces": false,
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Operator Agent requires a trusted workspace to perform bounded actions."
+    }
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension",
+  "scripts": {
+    "compile": "gulp compile-extension:operator-agent",
+    "watch": "gulp watch-extension:operator-agent"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "operatorAgent.runAction",
+        "title": "Operator Agent: Run Action"
+      },
+      {
+        "command": "operatorAgent.showRunReceipts",
+        "title": "Operator Agent: Show Latest Run Receipts"
+      },
+      {
+        "command": "operatorAgent.showReceiptStream",
+        "title": "Operator Agent: Show Receipt Stream"
+      }
+    ],
+    "configuration": {
+      "title": "Operator Agent",
+      "properties": {
+        "operatorAgent.approvalMode": {
+          "type": "string",
+          "enum": [
+            "all-writes-and-all-commands",
+            "none"
+          ],
+          "default": "all-writes-and-all-commands",
+          "description": "Approval mode for operator actions. Policy file still enforces allow/deny boundaries."
+        }
+      }
+    },
+    "chatParticipants": [
+      {
+        "id": "operator-agent.controller",
+        "name": "operator",
+        "fullName": "Operator Agent",
+        "description": "Bounded operator execution with policy and approvals.",
+        "isDefault": false,
+        "when": "chatIsEnabled",
+        "commands": [
+          {
+            "name": "run",
+            "description": "Plan and execute bounded operator actions"
+          }
+        ],
+        "modes": [
+          "agent",
+          "ask"
+        ],
+        "locations": [
+          "panel"
+        ]
+      }
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "22.x"
+  }
+}
