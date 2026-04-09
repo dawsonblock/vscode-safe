@@ -100,28 +100,67 @@ export class OperatorExecutor {
 			});
 			let stdout = '';
 			let stderr = '';
-			const timer = setTimeout(() => {
-				child.kill('SIGTERM');
-				reject(new Error(`Command timed out after ${timeoutMs}ms`));
-			}, timeoutMs);
-			child.stdout.on('data', data => {
+			let isSettled = false;
+			let killTimer: NodeJS.Timeout | undefined;
+			const terminateGracePeriodMs = 500;
+
+			const onStdoutData = (data: Buffer | string) => {
 				stdout += data.toString();
-			});
-			child.stderr.on('data', data => {
+			};
+			const onStderrData = (data: Buffer | string) => {
 				stderr += data.toString();
-			});
-			child.on('error', err => {
+			};
+			const cleanup = () => {
 				clearTimeout(timer);
-				reject(err);
-			});
-			child.on('close', code => {
-				clearTimeout(timer);
-				resolve({
+				if (killTimer) {
+					clearTimeout(killTimer);
+					killTimer = undefined;
+				}
+				child.stdout?.off('data', onStdoutData);
+				child.stderr?.off('data', onStderrData);
+				child.off('error', onError);
+				child.off('close', onClose);
+			};
+			const resolveOnce = (value: { exitCode: number; stdout: string; stderr: string }) => {
+				if (isSettled) {
+					return;
+				}
+				isSettled = true;
+				cleanup();
+				resolve(value);
+			};
+			const rejectOnce = (error: Error) => {
+				if (isSettled) {
+					return;
+				}
+				isSettled = true;
+				cleanup();
+				reject(error);
+			};
+			const onError = (err: Error) => {
+				rejectOnce(err);
+			};
+			const onClose = (code: number | null) => {
+				resolveOnce({
 					exitCode: code ?? 1,
 					stdout,
 					stderr
 				});
-			});
+			};
+			const timer = setTimeout(() => {
+				child.kill('SIGTERM');
+				killTimer = setTimeout(() => {
+					if (!isSettled) {
+						child.kill('SIGKILL');
+					}
+				}, terminateGracePeriodMs);
+				rejectOnce(new Error(`Command timed out after ${timeoutMs}ms`));
+			}, timeoutMs);
+
+			child.stdout?.on('data', onStdoutData);
+			child.stderr?.on('data', onStderrData);
+			child.on('error', onError);
+			child.on('close', onClose);
 		});
 
 		return {
