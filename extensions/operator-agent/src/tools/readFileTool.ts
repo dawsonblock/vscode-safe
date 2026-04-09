@@ -16,7 +16,9 @@ export const readFileTool: OperatorTool<ReadFileAction> = {
 	},
 	async validate(action: ReadFileAction, context: ToolExecutionContext): Promise<void> {
 		const roots = context.policy.roots.map(root => root.replace('${workspaceFolder}', context.workspaceFolder));
-		await assertPathAllowed(action.filePath, context.workspaceFolder, roots, context.policy.read_allow, context.policy.write_deny);
+		const policy = context.policy as ToolExecutionContext['policy'] & { read_deny?: string[]; write_deny?: string[] };
+		const readDeny = policy.read_deny ?? policy.write_deny;
+		await assertPathAllowed(action.filePath, context.workspaceFolder, roots, context.policy.read_allow, readDeny);
 	},
 	async execute(action: ReadFileAction, context: ToolExecutionContext) {
 		return context.executor.readFile(action.filePath, action.startLine, action.endLine);
