@@ -349,10 +349,10 @@ export class ChatSessionMetadataStore extends Disposable implements IChatSession
 	async storeForkedSessionMetadata(sourceSessionId: string, targetSessionId: string, customTitle: string): Promise<void> {
 		await this._intialize.value;
 		const sourceMetadata = await this.getSessionMetadata(sourceSessionId);
+		const { writtenToDisc, ...forkableMetadata } = sourceMetadata ?? {};
 		const forkedMetadata: ChatSessionMetadataFile = {
-			...sourceMetadata,
+			...forkableMetadata,
 			customTitle,
-			writtenToDisc: true,
 		};
 		await this.updateMetadataFields(targetSessionId, forkedMetadata);
 	}
