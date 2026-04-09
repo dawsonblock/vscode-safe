@@ -44,20 +44,6 @@
         "title": "Operator Agent: Show Receipt Stream"
       }
     ],
-    "configuration": {
-      "title": "Operator Agent",
-      "properties": {
-        "operatorAgent.approvalMode": {
-          "type": "string",
-          "enum": [
-            "all-writes-and-all-commands",
-            "none"
-          ],
-          "default": "all-writes-and-all-commands",
-          "description": "Approval mode for operator actions. Policy file still enforces allow/deny boundaries."
-        }
-      }
-    },
     "chatParticipants": [
       {
         "id": "operator-agent.controller",
